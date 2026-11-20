@@ -124,8 +124,8 @@ tone.release()
 For siren: alternate between two tones in a loop using `threading.Timer`. `ToneGenerator.TONE_PROP_BEEP` and `ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD` produce different tones — alternate them for siren effect. Duration: each `startTone(tone_type, duration_ms)` call. To stop: `tone.stopTone()` then `tone.release()`. **Never use `jnius`** — Chaquopy provides `java.jclass()` natively, jnius is not supported. **Important**: create ToneGenerator once and reuse it; do not create a new instance per alarm. Store as `self._tone` and check `if self._tone is None` before creating.
 - **`Slider` and `NumberInput` may crash on Android** — use `+`/`-` buttons with a `Label` instead.
 - **Don't block the main thread** — Toga runs on the UI thread. Use `self.loop.create_task()` or `self.loop.call_later()` for network calls, file I/O, or polling.
-- **UI updates from `threading.Timer` background threads** — `threading.Timer` runs in a separate Python thread, NOT the event loop. Toga does NOT auto-dispatch UI updates from these threads. You MUST use `self.loop.call_later(0, callback, *args)` to marshal updates to the main thread. Calling widget properties directly from `threading.Timer` causes `CalledFromWrongThreadException` or silent crashes. This is different from `self.loop.create_task()` which runs in the event loop and can update widgets directly.
-- **Never use `self.app.invoke()`** — Toga has no `invoke` method on app instances. The correct pattern is `self.loop.call_later(0, callback, *args)`.
+- **UI updates from `threading.Timer` on Android** — Direct widget property assignment works on Toga/Android. Do NOT use `self.loop.call_later()` or `self.app.invoke()` from `threading.Timer` callbacks — both fail silently on Android. This is the opposite of desktop Toga where `call_later` is required.
+- **Never use `self.app.invoke()`** — Toga has no `invoke` method on app instances.
 - **JAVA_HOME must be Java 17** — Briefcase rejects Java 19+ and will download its own JDK 17. Set `JAVA_HOME` to a Java 17 path or let Briefcase handle it.
 - **ANDROID_HOME must contain `cmdline-tools/`** — Briefcase checks for `$ANDROID_HOME/cmdline-tools/19.0/bin/sdkmanager.bat` (Windows) or `sdkmanager` (Unix). If the structure doesn't match, Briefcase downloads its own SDK instance.
 - **SDK licenses block builds** — The Android SDK requires accepting 8 licenses before any package install. Always pipe `yes |` to the build command, or accept them interactively first.
@@ -246,12 +246,12 @@ adb -s emulator-5554 logcat -d | grep -i "HostelAlarm\|python\|chaquopy"
 11. Iterate → fix issues, rebuild, reinstall
 ```
 
-### 10. Stop emulator
+### 8. Stop emulator
 ```bash
 adb -s emulator-5554 emu kill
 ```
 
-### 11. Mock server for testing (no real API needed)
+### 9. Mock server for testing (no real API needed)
 When the real API is unavailable or you need deterministic tests, run a mock server on the host:
 
 ```python
@@ -274,7 +274,7 @@ server.serve_forever()
 Start on host: `python mock_zabbix.py`
 App URL: `http://10.0.2.2:9999/REST/zabbix/?key=mock`
 
-### 12. UI update pattern that works on Android
+### 10. UI update pattern that works on Android
 **Direct UI updates from `threading.Timer` DO work on Toga/Android** — Toga auto-dispatches widget property changes. Do NOT use `self.loop.call_later()` or `self.app.invoke()` from background threads (both fail silently).
 
 ```python
@@ -288,7 +288,7 @@ self.tick_label.text = f"Ticks: {tick}"
 self.status_label.text = f"Polling every 5s... (tick {tick})"
 ```
 
-### 13. AlarmManager must be initialized in __init__
+### 11. AlarmManager must be initialized in __init__
 ```python
 def __init__(self):
     super().__init__()

@@ -89,6 +89,77 @@ briefcase build android --debug
 adb install -r build/HostelAlarm/android/gradle/app/build/outputs/apk/debug/app-debug.apk
 ```
 
+## Эмулятор Android
+
+### Установка Android SDK и AVD Manager
+
+```bash
+# Установите Android SDK через Android Studio или командной строкой:
+# SDK устанавливается в ~/Android/Sdk (Linux/macOS) или
+# C:\Users\<user>\AppData\Local\Android\Sdk (Windows)
+
+# Проверьте доступные системные образы:
+ls $ANDROID_HOME/system-images/
+
+# Создайте виртуальное устройство (AVD):
+$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager.bat create avd \
+  -n HostelAlarm \
+  -k "system-images;android-33;google_apis;x86_64" \
+  --device "Nexus 6" \
+  -f
+```
+
+### Запуск эмулятора
+
+```bash
+# Запуск без графического окна (для автоматизации):
+$ANDROID_HOME/emulator/emulator.exe -avd HostelAlarm \
+  -no-snapshot \
+  -no-window \
+  -no-audio \
+  -gpu swiftshader_indirect
+
+# Дождитесь загрузки:
+$ANDROID_HOME/platform-tools/adb.exe wait-for-device
+$ANDROID_HOME/platform-tools/adb.exe shell getprop sys.boot_completed
+# Вернёт "1" когда эмулятор готов
+```
+
+### Остановка эмулятора
+
+```bash
+$ANDROID_HOME/platform-tools/adb.exe -s emulator-5554 emu kill
+```
+
+### Проверка подключения
+
+```bash
+# Список подключённых устройств
+adb devices
+
+# Должно показать:
+# emulator-5554    device
+```
+
+### Скриншот и логирование
+
+```bash
+# Скриншот экрана
+adb -s emulator-5554 exec-out screencap -p > screenshot.png
+
+# Чтение логов приложения
+adb -s emulator-5554 logcat -d -s HostelAlarm
+
+# Все логи с Python
+adb -s emulator-5554 logcat -d | grep -i "HostelAlarm\|python\|chaquopy"
+```
+
+### Сеть: доступ к хост-машине
+
+Из эмулятора хост-машина доступна по адресу `10.0.2.2`.
+Для доступа к сервисам в локальной сети настройте TCP-прокси на хосте
+(см. `hermes/SKILL.md` — секция "Network access from emulator").
+
 ## Лицензия
 
 BSD-3-Clause

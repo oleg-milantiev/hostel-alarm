@@ -1,0 +1,23 @@
+# Build artifacts
+build/
+dist/
+
+# Briefcase cache
+.briefcase/
+
+# UI dump (debug only)
+ui.xml
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
